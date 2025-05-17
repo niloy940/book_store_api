@@ -2,11 +2,12 @@ from sqlalchemy.orm import Session
 from app.models import Book
 from app.schemas import BookCreate, BookUpdate
 from typing import Optional
+from utils.pagination import paginate
 from sqlalchemy import or_
 
 def get_all_books(db: Session, skip=0, limit=10, search: Optional[str] = None):
     query = db.query(Book)
-    
+
     if search:
         query = query.filter(
             or_(
@@ -14,17 +15,8 @@ def get_all_books(db: Session, skip=0, limit=10, search: Optional[str] = None):
                 Book.author.ilike(f"%{search}%")
             )
         )
-    
-    total = query.count()
-    books = query.offset(skip).limit(limit).all()
-    
-    return {
-        "total": total,
-        "skip": skip,
-        "limit": limit,
-        "data": books
-    }
 
+    return paginate(query, skip, limit)
 
 def get_book_by_id(db: Session, book_id: int):
     return db.query(Book).filter(Book.id == book_id).first()
